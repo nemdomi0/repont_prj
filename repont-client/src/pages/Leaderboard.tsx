@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import Modal from "../components/Modal";
-import { getLeaderboard, getEvents } from "../services/api";
+import { getLeaderboard, getEvents, getMachines } from "../services/api";
 
 type Item = {
   product_name: string;
@@ -10,30 +10,32 @@ type Item = {
 function Leaderboard() {
   const [data, setData] = useState<Item[]>([]);
   const [selected, setSelected] = useState<Item | null>(null);
-
   const [events, setEvents] = useState<any[]>([]);
-  const [machines, setMachines] = useState<any[]>([]);                                 /////////
+  const [machines, setMachines] = useState<any[]>([]);
 
-
-  // FILTERS (for later)
   const [machine, setMachine] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // PAGINATION
-  const [page, setPage] = useState(0);
-  const [limit, setLimit] = useState<number | null>(10);
+  const maxCount = Math.max(...data.map((d) => d.count), 1);
 
-  // Load leaderboard
+  // LOAD MACHINES
   useEffect(() => {
-    getLeaderboard().then(setData);
+    getMachines().then(setMachines);
   }, []);
 
+  // LOAD LEADERBOARD (FILTERED)
   useEffect(() => {
-  fetch("http://127.0.0.1:8000/machines")
-    .then(res => res.json())
-    .then(setMachines);
-}, []);
+    getLeaderboard(machine, startDate, endDate).then(setData);
+  }, [machine, startDate, endDate]);
+
+  // REFRESH MODAL DATA ON FILTER CHANGE
+  useEffect(() => {
+    if (selected) {
+      getEvents(selected.product_name, machine, startDate, endDate)
+        .then(setEvents);
+    }
+  }, [machine]);
 
   return (
     <div style={{ padding: "20px" }}>
@@ -46,24 +48,24 @@ function Leaderboard() {
         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
           <select onChange={(e) => setMachine(e.target.value)}>
             <option value="">All Machines</option>
-              <option value="">All Machines</option>
-              {machines.map((m) => (
-                 <option key={m.id} value={m.machine_name}>
-                  {m.machine_name}
-                </option>
-              ))}
+            {machines.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.machine_name}
+              </option>
+            ))}
           </select>
 
-          <input type="date" onChange={(e) => setStartDate(e.target.value)} />
-          <input type="date" onChange={(e) => setEndDate(e.target.value)} />
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+          />
 
-          <button
-            onClick={() =>
-              console.log("Filters:", machine, startDate, endDate)
-            }
-          >
-            Apply
-          </button>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+          />
         </div>
       </div>
 
@@ -75,13 +77,13 @@ function Leaderboard() {
             className="bar"
             onClick={() => {
               setSelected(item);
-              setPage(0);
-
-              getEvents(item.product_name, 0, limit ?? 10).then(setEvents);
+              getEvents(item.product_name, machine, startDate, endDate)
+                .then(setEvents);
             }}
             style={{
               width: "60px",
-              height: `${item.count * 0.05}px`
+              height: `${(item.count / maxCount) * 300}px`,
+              cursor: "pointer"
             }}
           >
             <span>{item.count}</span>
@@ -101,85 +103,54 @@ function Leaderboard() {
       {/* MODAL */}
       {selected && (
         <Modal onClose={() => setSelected(null)}>
-          <h2>{selected.product_name}</h2>
+          <h2 style={{ fontSize: "28px", marginBottom: "10px" }}>
+            {selected.product_name}
+          </h2>
 
-          {/* LIMIT SELECTOR */}
-          <div style={{ marginBottom: "10px" }}>
-            <label>Rows: </label>
-            <select
-              value={limit ?? "all"}
-              onChange={(e) => {
-                const value = e.target.value;
-                const newLimit = value === "all" ? null : Number(value);
-
-                setLimit(newLimit);
-                setPage(0);
-
-                getEvents(
-                  selected.product_name,
-                  0,
-                  newLimit ?? 1000000
-                ).then(setEvents);
-              }}
-            >
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={100}>100</option>
-              <option value="all">No limit</option>
-            </select>
+          <div style={{ marginBottom: "10px", opacity: 0.8 }}>
+            {events.length} rows loaded
           </div>
 
-          {/* DATA */}
-          <div style={{ maxHeight: "300px", overflowY: "auto" }}>
-            {events.map((ev, i) => (
-              <div key={i} style={{ padding: "5px 0" }}>
-                Type: {ev.type_number} | Date: {ev.event_time}
-              </div>
-            ))}
+          <div style={{ maxHeight: "400px", overflowY: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ borderBottom: "2px solid var(--border)" }}>
+                  <th style={{ padding: "12px", textAlign: "left" }}>Machine</th>
+                  <th style={{ padding: "12px", textAlign: "left" }}>Date</th>
+                  <th style={{ padding: "12px", textAlign: "left" }}>Event Type</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {events.map((ev, i) => (
+                  <tr
+                    key={i}
+                    style={{
+                      borderBottom: "1px solid var(--border)",
+                      transition: "background 0.2s ease"
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.background =
+                        "rgba(255,255,255,0.05)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.background = "transparent")
+                    }
+                  >
+                    <td style={{ padding: "12px" }}>{ev.machine_name}</td>
+                    <td style={{ padding: "12px" }}>{ev.event_time}</td>
+                    <td style={{ padding: "12px" }}>{ev.event_type}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
 
-          {/* PAGINATION */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              marginTop: "10px"
-            }}
-          >
-            <button
-              onClick={() => {
-                const prevPage = Math.max(page - 1, 0);
-                setPage(prevPage);
-
-                getEvents(
-                  selected.product_name,
-                  prevPage,
-                  limit ?? 10
-                ).then(setEvents);
-              }}
-              disabled={page === 0 || limit === null}
-            >
-              ⬅ Prev
-            </button>
-
-            <span>Page {page + 1}</span>
-
-            <button
-              onClick={() => {
-                const nextPage = page + 1;
-                setPage(nextPage);
-
-                getEvents(
-                  selected.product_name,
-                  nextPage,
-                  limit ?? 10
-                ).then(setEvents);
-              }}
-              disabled={limit === null}
-            >
-              Next ➡
-            </button>
-          </div>
+          {events.length === 0 && (
+            <p style={{ marginTop: "15px", opacity: 0.7 }}>
+              No events found for this filter.
+            </p>
+          )}
         </Modal>
       )}
     </div>

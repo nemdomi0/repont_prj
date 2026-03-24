@@ -3,27 +3,65 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
 // LEADERBOARD
-Route::get('/leaderboard', function () {
-    return DB::table('recycling as r')
+Route::get('/leaderboard', function (Request $req) {
+    $machine = $req->query('machine');
+    $start = $req->query('start');
+    $end = $req->query('end');
+
+    $query = DB::table('recycling as r')
         ->join('products as p', 'r.product', '=', 'p.id')
-        ->join('machines as m', 'r.machine', '=', 'm.id')
+        ->join('machines as m', 'r.machine', '=', 'm.id');
+
+    // MACHINE FILTER
+    if ($machine) {
+        $query->where('m.id', $machine);
+    }
+
+    // DATE FILTER
+    if ($start && $end) {
+        $query->whereBetween('r.event_time', [$start, $end]);
+    }
+
+    return $query
         ->select('p.product_name', DB::raw('COUNT(*) as count'))
         ->groupBy('p.product_name')
         ->orderByDesc('count')
         ->get();
 });
-
 // EVENTS
 Route::get('/events', function (Request $req) {
     $product = $req->query('product');
+    $machine = $req->query('machine');
+    $start = $req->query('start');
+    $end = $req->query('end');
 
-    return DB::table('recycling as r')
+    $query = DB::table('recycling as r')
         ->join('products as p', 'r.product', '=', 'p.id')
         ->join('machines as m', 'r.machine', '=', 'm.id')
-        ->where('p.product_name', $product)
-        ->select('p.product_name', 'p.type_number', 'r.event_time', 'm.machine_name')
+        ->where('p.product_name', $product);
+
+    // MACHINE FILTER
+    if ($machine) {
+        $query->where('m.id', $machine);
+    }
+
+    // DATE FILTER (flexible)
+    if ($start) {
+        $query->where('r.event_time', '>=', $start);
+    }
+
+    if ($end) {
+        $query->where('r.event_time', '<=', $end);
+    }
+
+    return $query
+        ->select(
+            'p.product_name',
+            'r.event_type',
+            'r.event_time',
+            'm.machine_name'
+        )
         ->orderByDesc('r.event_time')
-        ->limit(20)
         ->get();
 });
 

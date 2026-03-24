@@ -5,9 +5,6 @@ type ModalProps = {
   onClose: () => void;
 };
 
-
-
-
 function Modal({ children, onClose }: ModalProps) {
   return (
     <div
@@ -27,19 +24,27 @@ function Modal({ children, onClose }: ModalProps) {
       <div
         className="panel"
         style={{
-          width: "500px",
+          width: "700px",
           maxHeight: "80vh",
-          overflow: "hidden"
+          overflow: "hidden",
+          padding: "20px",
+          display: "flex",
+          flexDirection: "column"
         }}
       >
-        {children}
-
-        <button
-          style={{ marginTop: "10px" }}
-          onClick={onClose}
+        {/* HEADER WITH CLOSE */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            marginBottom: "10px"
+          }}
         >
-          Close
-        </button>
+          <button onClick={onClose}>✕</button>
+        </div>
+
+        {/* CONTENT */}
+        {children}
       </div>
     </div>
   );
