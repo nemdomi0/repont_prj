@@ -1,4 +1,5 @@
 <?php
+
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
@@ -12,22 +13,22 @@ Route::get('/leaderboard', function (Request $req) {
         ->join('products as p', 'r.product', '=', 'p.id')
         ->join('machines as m', 'r.machine', '=', 'm.id');
 
-    // MACHINE FILTER
     if ($machine) {
         $query->where('m.id', $machine);
     }
 
-    // DATE FILTER
     if ($start && $end) {
         $query->whereBetween('r.event_time', [$start, $end]);
     }
 
     return $query
-        ->select('p.product_name', DB::raw('COUNT(*) as count'))
-        ->groupBy('p.product_name')
+        ->select('p.id', 'p.product_name', DB::raw('COUNT(*) as count'))
+        ->groupBy('p.id', 'p.product_name')
         ->orderByDesc('count')
         ->get();
 });
+
+
 // EVENTS
 Route::get('/events', function (Request $req) {
     $product = $req->query('product');
@@ -38,14 +39,12 @@ Route::get('/events', function (Request $req) {
     $query = DB::table('recycling as r')
         ->join('products as p', 'r.product', '=', 'p.id')
         ->join('machines as m', 'r.machine', '=', 'm.id')
-        ->where('p.product_name', $product);
+        ->where('r.product', $product);
 
-    // MACHINE FILTER
     if ($machine) {
         $query->where('m.id', $machine);
     }
 
-    // DATE FILTER (flexible)
     if ($start) {
         $query->where('r.event_time', '>=', $start);
     }
@@ -64,6 +63,7 @@ Route::get('/events', function (Request $req) {
         ->orderByDesc('r.event_time')
         ->get();
 });
+
 
 // MACHINES
 Route::get('/machines', function () {

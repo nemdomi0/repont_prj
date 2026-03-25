@@ -16,7 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
     // MIDDLEWARE
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
-    })
+
+        $middleware->validateCsrfTokens(except: [
+            'api/*',
+    ]);
+})
 
     // EXCEPTIONS
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -1,4 +1,4 @@
-const BASE_URL = "http://127.0.0.1:8000";
+const BASE_URL = "/api";
 
 // LEADERBOARD
 export async function getLeaderboard(
@@ -18,13 +18,13 @@ export async function getLeaderboard(
 
 // EVENTS (with pagination + filters)
 export async function getEvents(
-  product: string,
+  productId: number,
   machine?: string,
   start?: string,
   end?: string
 ) {
   const params = new URLSearchParams({
-    product,
+    product: String(productId),
   });
 
   if (machine) params.append("machine", machine);

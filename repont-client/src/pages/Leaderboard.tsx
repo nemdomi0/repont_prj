@@ -3,6 +3,7 @@ import Modal from "../components/Modal";
 import { getLeaderboard, getEvents, getMachines } from "../services/api";
 
 type Item = {
+  id: number;
   product_name: string;
   count: number;
 };
@@ -32,7 +33,7 @@ function Leaderboard() {
   // REFRESH MODAL DATA ON FILTER CHANGE
   useEffect(() => {
     if (selected) {
-      getEvents(selected.product_name, machine, startDate, endDate)
+      getEvents(selected.id, machine, startDate, endDate)
         .then(setEvents);
     }
   }, [machine]);
@@ -77,7 +78,7 @@ function Leaderboard() {
             className="bar"
             onClick={() => {
               setSelected(item);
-              getEvents(item.product_name, machine, startDate, endDate)
+              getEvents(item.id, machine, startDate, endDate)
                 .then(setEvents);
             }}
             style={{
