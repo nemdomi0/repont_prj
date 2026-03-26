@@ -29,7 +29,7 @@ machine_ids = [row[0] for row in cursor.fetchall()]
 cursor.execute("SELECT id FROM products")
 product_ids = [row[0] for row in cursor.fetchall()]
 
-# WEIGHTS (tweak these to shape your data)
+# WEIGHTS 
 machine_weights = [random.randint(1, 10) for _ in machine_ids]
 product_weights = [random.randint(1, 10) for _ in product_ids]
 

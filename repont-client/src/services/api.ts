@@ -18,7 +18,7 @@ const res = await fetch(`${BASE_URL}/leaderboard?${params}`, {
  return res.json();
 }
 
-// EVENTS (with pagination + filters)
+// EVENTS (for chart)
 export async function getEvents(
   productId: number,
   machine?: string,
