@@ -1,71 +1,92 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
-// LEADERBOARD
-Route::get('/leaderboard', function (Request $req) {
-    $machine = $req->query('machine');
-    $start = $req->query('start');
-    $end = $req->query('end');
 
-    $query = DB::table('recycling as r')
-        ->join('products as p', 'r.product', '=', 'p.id')
-        ->join('machines as m', 'r.machine', '=', 'm.id');
-
-    if ($machine) {
-        $query->where('m.id', $machine);
+//   LOGIN (public)
+Route::post('/api/login', function (Request $req) {
+    if (Auth::attempt([
+        'email' => $req->email,
+        'password' => $req->password
+    ])) {
+        return response()->json(['success' => true]);
     }
 
-    if ($start && $end) {
-        $query->whereBetween('r.event_time', [$start, $end]);
-    }
-
-    return $query
-        ->select('p.id', 'p.product_name', DB::raw('COUNT(*) as count'))
-        ->groupBy('p.id', 'p.product_name')
-        ->orderByDesc('count')
-        ->get();
+    return response()->json(['success' => false], 401);
 });
 
 
-// EVENTS
-Route::get('/events', function (Request $req) {
-    $product = $req->query('product');
-    $machine = $req->query('machine');
-    $start = $req->query('start');
-    $end = $req->query('end');
+//     PROTECTED ROUTES
+Route::middleware('auth')->group(function () {
 
-    $query = DB::table('recycling as r')
-        ->join('products as p', 'r.product', '=', 'p.id')
-        ->join('machines as m', 'r.machine', '=', 'm.id')
-        ->where('r.product', $product);
+    //  LEADERBOARD
+    Route::get('/api/leaderboard', function (Request $req) {
+        $machine = $req->query('machine');
+        $start = $req->query('start');
+        $end = $req->query('end');
 
-    if ($machine) {
-        $query->where('m.id', $machine);
-    }
+        $query = DB::table('recycling as r')
+            ->join('products as p', 'r.product', '=', 'p.id')
+            ->join('machines as m', 'r.machine', '=', 'm.id');
 
-    if ($start) {
-        $query->where('r.event_time', '>=', $start);
-    }
+        if ($machine) {
+            $query->where('m.id', $machine);
+        }
 
-    if ($end) {
-        $query->where('r.event_time', '<=', $end);
-    }
+        if ($start && $end) {
+            $query->whereBetween('r.event_time', [$start, $end]);
+        }
 
-    return $query
-        ->select(
-            'p.product_name',
-            'r.event_type',
-            'r.event_time',
-            'm.machine_name'
-        )
-        ->orderByDesc('r.event_time')
-        ->get();
-});
+        return $query
+            ->select('p.id', 'p.product_name', DB::raw('COUNT(*) as count'))
+            ->groupBy('p.id', 'p.product_name')
+            ->orderByDesc('count')
+            ->get();
+    });
 
 
-// MACHINES
-Route::get('/machines', function () {
-    return DB::table('machines')->get();
+    //  EVENTS
+    Route::get('/api/events', function (Request $req) {
+        $product = $req->query('product');
+        $machine = $req->query('machine');
+        $start = $req->query('start');
+        $end = $req->query('end');
+
+        $query = DB::table('recycling as r')
+            ->join('products as p', 'r.product', '=', 'p.id')
+            ->join('machines as m', 'r.machine', '=', 'm.id')
+            ->where('r.product', $product);
+
+        if ($machine) {
+            $query->where('m.id', $machine);
+        }
+
+        if ($start) {
+            $query->where('r.event_time', '>=', $start);
+        }
+
+        if ($end) {
+            $query->where('r.event_time', '<=', $end);
+        }
+
+        return $query
+            ->select(
+                'p.product_name',
+                'r.event_type',
+                'r.event_time',
+                'm.machine_name'
+            )
+            ->orderByDesc('r.event_time')
+            ->get();
+    });
+
+
+    //MACHINES
+    Route::get('/api/machines', function () {
+        return DB::table('machines')->get();
+    });
+
 });

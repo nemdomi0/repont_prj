@@ -6,12 +6,26 @@ function Login() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = () => {
-    //dummy check
-    if (email === "admin@test.com" && password === "1234") {
+  const handleLogin = async () => {
+
+    const res = await fetch("/api/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+     },
+     credentials: "include",
+      body: JSON.stringify({
+        email,
+        password,
+      }),
+    });
+
+
+    if (res.ok) {
+      localStorage.setItem("auth", "true");
       navigate("/leaderboard");
     } else {
-      alert("Wrong email or password");
+        alert("Wrong email or password");
     }
   };
 

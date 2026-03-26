@@ -21,19 +21,21 @@ INSERT INTO PRODUCTS (type_number, product_name) VALUES
 --  @block
 create TABLE MACHINES(
     id VARCHAR(100) PRIMARY KEY,
-    machine_name VARCHAR(100)
+    machine_name VARCHAR(100),
+    location VARCHAR(100),
+    installation_time DATETIME
 );
-INSERT INTO machines (id, machine_name) VALUES
-('1a0', 'Alpha'),
-('1a1', 'Beta'),
-('1a2', 'Gamma'),
-('1a3', 'Delta'),
-('1a4', 'Epsilon'),
-('1a5', 'Zeta'),
-('1a6', 'Eta'),
-('1a7', 'Theta'),
-('1a8', 'Iota'),
-('1a9', 'Kappa');
+INSERT INTO machines (id, machine_name, location, installation_time) VALUES
+('1a0', 'Alpha', 'Location A', '2023-01-01 00:00:00'),
+('1a1', 'Beta', 'Location B', '2023-02-01 00:00:00'),
+('1a2', 'Gamma', 'Location C', '2023-03-01 00:00:00'),
+('1a3', 'Delta', 'Location D', '2023-04-01 00:00:00'),
+('1a4', 'Epsilon', 'Location E', '2023-05-01 00:00:00'),
+('1a5', 'Zeta', 'Location F', '2023-06-01 00:00:00'),
+('1a6', 'Eta', 'Location G', '2023-07-01 00:00:00'),
+('1a7', 'Theta', 'Location H', '2023-08-01 00:00:00'),
+('1a8', 'Iota', 'Location I', '2023-09-01 00:00:00'),
+('1a9', 'Kappa', 'Location J', '2023-10-01 00:00:00');
 
 
 -- @block
@@ -63,8 +65,7 @@ CREATE TABLE users (
 
 -- @block
 DELETE FROM recycling
-WHERE id > 0;
-
+WHERE id > 100101;
 
 
 -- @block
@@ -72,16 +73,4 @@ CREATE INDEX idx_product ON recycling(product);
 CREATE INDEX idx_machine ON recycling(machine);
 CREATE INDEX idx_event_time ON recycling(event_time);
 CREATE INDEX idx_full ON recycling(product, machine, event_time);
-
-
--- @block
-DROP TABLE cache;
-DROP TABLE cache_locks;
-DROP TABLE failed_jobs;
-DROP TABLE jobs;
-DROP TABLE job_batches;
-DROP TABLE password_reset_tokens;
-
-
-
 
